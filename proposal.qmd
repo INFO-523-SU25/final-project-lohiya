@@ -35,7 +35,7 @@ My goal is to develop a transparent and accurate machine learning model that can
 ```{python}
 #| label: load-dataset
 #| message: false
-fake_real_news = pd.read_csv("data/fake_or_real_news.csv")
+fake_real_news = pd.read_csv("data/fake_or_real_news_data.csv")
 ```
 
 The dataset I am using for the project is the Fake and Real News Dataset from Kaggle. It consists of roughly 6,300 rows with four columns representing article title, text content, and label (fake or real). I will combine the title and text for a comprehensive representation; this dataset is appropriate for the project because it provides balanced and diverse examples of fake and real news. I chose this dataset because it includes the full details of articles and it's also large enough to train the model and make predictions.
