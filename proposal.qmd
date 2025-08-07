@@ -1,8 +1,8 @@
 ---
-title: "Proposal title"
-subtitle: "Proposal"
+title: "Detecting Fake News with TF-IDF and Machine Learning"
+subtitle: "INFO 523 - Proposal"
 author: 
-  - name: "Team Name - Team member 1, Team member 2,..."
+  - name: "Anvesh Lohiya"
     affiliations:
       - name: "College of Information Science, University of Arizona"
 description: "Project description"
@@ -23,23 +23,39 @@ jupyter: python3
 #| label: load-pkgs
 #| message: false
 import numpy as np
+import pandas as pd
 ```
+
+## Goal
+
+My goal is to develop a transparent and accurate machine learning model that can classify news articles as fake or real based on their textual content and identify the words or phrases most predictive of fake news.
 
 ## Dataset
 
 ```{python}
 #| label: load-dataset
 #| message: false
+fake_real_news = pd.read_csv("data/fake_or_real_news.csv")
 ```
 
-A brief description of your dataset including its provenance, dimensions, etc. as well as the reason why you chose this dataset.
-
-Make sure to load the data and use inline code for some of this information.
+The dataset I am using for the project is the Fake and Real News Dataset from Kaggle. It consists of roughly 6,300 rows with four columns representing article title, text content, and label (fake or real). I will combine the title and text for a comprehensive representation; this dataset is appropriate for the project because it provides balanced and diverse examples of fake and real news. I chose this dataset because it includes the full details of articles and it's also large enough to train the model and make predictions.
 
 ## Questions
 
-The two questions you want to answer.
+Can we build an effective and interpretable fake news classifier using TF-IDF and machine learning?
+
+Can we identify which words or phrases are most predictive of fake news content using categorical features?
 
 ## Analysis plan
 
--   A plan for answering each of the questions including the variables involved, variables to be created (if any), external data to be merged in (if any).
+-   First, I will preprocess the data and apply TF-IDF to extract relevant textual features.
+-   Next, I will train machine learning classifiers and evaluate their performance to assess effectiveness.
+-   Finally, I will interpret the model to identify which words or patterns most strongly predict fake news.
+
+## Weekly Plan
+
+| Week | Task |
+|------------------------------------|------------------------------------|
+| 1 | Data loading, cleaning, preprocessing, and exploratory data analysis. Implement TF-IDF vectorization and basic logistic regression model. |
+| 2 | Model training, hyperparameter tuning, and evaluation. Extract top predictive words/phrases using model coefficients. Begin documentation of results. |
+| 3 | Prepare final analysis and visualizations of predictive words. Write up project report, finalize README files, and organize code repository structure. |
