@@ -36,6 +36,15 @@ My goal is to develop a transparent and accurate machine learning model that can
 #| label: load-dataset
 #| message: false
 fake_real_news = pd.read_csv("data/fake_or_real_news_data.csv")
+
+# Rename unnamed column
+fake_real_news.rename(columns={"Unnamed: 0": "article #"}, inplace=True)
+
+# Print column names
+display(fake_real_news.columns)
+
+# Print data types & shape of data
+display(fake_real_news.info())
 ```
 
 The dataset I am using for the project is the Fake and Real News Dataset from Kaggle. It consists of roughly 6,300 rows with four columns representing article title, text content, and label (fake or real). I will combine the title and text for a comprehensive representation; this dataset is appropriate for the project because it provides balanced and diverse examples of fake and real news. I chose this dataset because it includes the full details of articles and it's also large enough to train the model and make predictions.
@@ -45,6 +54,38 @@ The dataset I am using for the project is the Fake and Real News Dataset from Ka
 Can we build an effective and interpretable fake news classifier using TF-IDF and machine learning?
 
 Can we identify which words or phrases are most predictive of fake news content using categorical features?
+
+```{python}
+#| label: sentiment-features
+#| message: false
+from textblob import TextBlob
+
+# Function to get sentiment scores
+def get_sentiment(text):
+    blob = TextBlob(str(text))  # Ensure it's a string
+    return pd.Series([blob.sentiment.polarity, 
+                      blob.sentiment.subjectivity])
+
+# Title sentiment features
+fake_real_news[['title_polarity', 
+                'title_subjectivity']] = fake_real_news['title'].apply(get_sentiment)
+
+# Text sentiment features
+fake_real_news[['text_polarity', 
+                'text_subjectivity']] = fake_real_news['text'].apply(get_sentiment)
+
+# Preview the new dataset with sentiment features
+fake_real_news.head()
+```
+
+## Feature Engineering
+
+| Feature | Description |
+|--------------------------------------------|----------------------------|
+| title_polarity | Sentiment score of the title from -1 (negative) to +1 (positive) |
+| title_subjectivity | Subjectivity score of the title from 0 (objective) to 1 (subjective) |
+| text_polarity | Sentiment score of the full text from -1 (negative) to +1 (positive) |
+| text_subjectivity | Subjectivity score of the full text from 0 (objective) to 1 (subjective) |
 
 ## Analysis plan
 
