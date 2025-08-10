@@ -1,0 +1,135 @@
+[
+  {
+    "objectID": "proposal.html",
+    "href": "proposal.html",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "",
+    "text": "import numpy as np\nimport pandas as pd"
+  },
+  {
+    "objectID": "proposal.html#goal",
+    "href": "proposal.html#goal",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "Goal",
+    "text": "Goal\nMy goal is to develop a transparent and accurate machine learning model that can classify news articles as fake or real based on their textual content and identify the words or phrases most predictive of fake news."
+  },
+  {
+    "objectID": "proposal.html#dataset",
+    "href": "proposal.html#dataset",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "Dataset",
+    "text": "Dataset\n\nfake_real_news = pd.read_csv(\"data/fake_or_real_news_data.csv\")\n\n# Rename unnamed column\nfake_real_news.rename(columns={\"Unnamed: 0\": \"article #\"}, inplace=True)\n\n# Print column names\ndisplay(fake_real_news.columns)\n\n# Print data types & shape of data\ndisplay(fake_real_news.info())\n\nIndex(['article #', 'title', 'text', 'label'], dtype='object')\n\n\n&lt;class 'pandas.core.frame.DataFrame'&gt;\nRangeIndex: 6335 entries, 0 to 6334\nData columns (total 4 columns):\n #   Column     Non-Null Count  Dtype \n---  ------     --------------  ----- \n 0   article #  6335 non-null   int64 \n 1   title      6335 non-null   object\n 2   text       6335 non-null   object\n 3   label      6335 non-null   object\ndtypes: int64(1), object(3)\nmemory usage: 198.1+ KB\n\n\nNone\n\n\nThe dataset I am using for the project is the Fake and Real News Dataset from Kaggle. It consists of roughly 6,300 rows with four columns representing article title, text content, and label (fake or real). I will combine the title and text for a comprehensive representation; this dataset is appropriate for the project because it provides balanced and diverse examples of fake and real news. I chose this dataset because it includes the full details of articles and it’s also large enough to train the model and make predictions."
+  },
+  {
+    "objectID": "proposal.html#questions",
+    "href": "proposal.html#questions",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "Questions",
+    "text": "Questions\nCan we build an effective and interpretable fake news classifier using TF-IDF and machine learning?\nCan we identify which words or phrases are most predictive of fake news content using categorical features?\n\nfrom textblob import TextBlob\n\n# Function to get sentiment scores\ndef get_sentiment(text):\n    blob = TextBlob(str(text))  # Ensure it's a string\n    return pd.Series([blob.sentiment.polarity, \n                      blob.sentiment.subjectivity])\n\n# Title sentiment features\nfake_real_news[['title_polarity', \n                'title_subjectivity']] = fake_real_news['title'].apply(get_sentiment)\n\n# Text sentiment features\nfake_real_news[['text_polarity', \n                'text_subjectivity']] = fake_real_news['text'].apply(get_sentiment)\n\n# Preview the new dataset with sentiment features\nfake_real_news.head()\n\n\n\n\n\n\n\n\narticle #\ntitle\ntext\nlabel\ntitle_polarity\ntitle_subjectivity\ntext_polarity\ntext_subjectivity\n\n\n\n\n0\n8476\nYou Can Smell Hillary’s Fear\nDaniel Greenfield, a Shillman Journalism Fello...\nFAKE\n0.000000\n0.000000\n0.059595\n0.562654\n\n\n1\n10294\nWatch The Exact Moment Paul Ryan Committed Pol...\nGoogle Pinterest Digg Linkedin Reddit Stumbleu...\nFAKE\n0.125000\n0.175000\n0.082652\n0.518638\n\n\n2\n3608\nKerry to go to Paris in gesture of sympathy\nU.S. Secretary of State John F. Kerry said Mon...\nREAL\n0.000000\n0.000000\n0.102574\n0.348775\n\n\n3\n10142\nBernie supporters on Twitter erupt in anger ag...\n— Kaydee King (@KaydeeKing) November 9, 2016 T...\nFAKE\n-0.875000\n0.200000\n0.063645\n0.503563\n\n\n4\n875\nThe Battle of New York: Why This Primary Matters\nIt's primary day in New York and front-runners...\nREAL\n0.268182\n0.477273\n0.251709\n0.420109"
+  },
+  {
+    "objectID": "proposal.html#feature-engineering",
+    "href": "proposal.html#feature-engineering",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "Feature Engineering",
+    "text": "Feature Engineering\n\n\n\n\n\n\n\nFeature\nDescription\n\n\n\n\ntitle_polarity\nSentiment score of the title from -1 (negative) to +1 (positive)\n\n\ntitle_subjectivity\nSubjectivity score of the title from 0 (objective) to 1 (subjective)\n\n\ntext_polarity\nSentiment score of the full text from -1 (negative) to +1 (positive)\n\n\ntext_subjectivity\nSubjectivity score of the full text from 0 (objective) to 1 (subjective)"
+  },
+  {
+    "objectID": "proposal.html#analysis-plan",
+    "href": "proposal.html#analysis-plan",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "Analysis plan",
+    "text": "Analysis plan\n\nFirst, I will preprocess the data and apply TF-IDF to extract relevant textual features.\nNext, I will train machine learning classifiers and evaluate their performance to assess effectiveness.\nFinally, I will interpret the model to identify which words or patterns most strongly predict fake news."
+  },
+  {
+    "objectID": "proposal.html#weekly-plan",
+    "href": "proposal.html#weekly-plan",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "Weekly Plan",
+    "text": "Weekly Plan\n\n\n\n\n\n\n\nWeek\nTask\n\n\n\n\n1\nData loading, cleaning, preprocessing, and exploratory data analysis. Implement TF-IDF vectorization and basic logistic regression model.\n\n\n2\nModel training, hyperparameter tuning, and evaluation. Extract top predictive words/phrases using model coefficients. Begin documentation of results.\n\n\n3\nPrepare final analysis and visualizations of predictive words. Write up project report, finalize README files, and organize code repository structure."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "",
+    "text": "Recently, fake news has been spreading a lot globally, which really questions the credibility and trustworthiness of the news source. In order to stop falling for the fake news, we must check the news source and make sure it is credible, and also read the news article thoroughly to see if it makes sense."
+  },
+  {
+    "objectID": "index.html#abstract",
+    "href": "index.html#abstract",
+    "title": "Detecting Fake News with TF-IDF and Machine Learning",
+    "section": "",
+    "text": "Recently, fake news has been spreading a lot globally, which really questions the credibility and trustworthiness of the news source. In order to stop falling for the fake news, we must check the news source and make sure it is credible, and also read the news article thoroughly to see if it makes sense."
+  },
+  {
+    "objectID": "presentation.html#quarto",
+    "href": "presentation.html#quarto",
+    "title": "Project title",
+    "section": "Quarto",
+    "text": "Quarto\n\nThe presentation is created using the Quarto CLI\n## sets the start of a new slide"
+  },
+  {
+    "objectID": "presentation.html#layouts",
+    "href": "presentation.html#layouts",
+    "title": "Project title",
+    "section": "Layouts",
+    "text": "Layouts\nYou can use plain text\n\n\n\nor bullet points1\n\n\nor in two columns\n\n\nlike\nthis\n\nAnd add footnotes"
+  },
+  {
+    "objectID": "presentation.html#code",
+    "href": "presentation.html#code",
+    "title": "Project title",
+    "section": "Code",
+    "text": "Code\n\n\n                            OLS Regression Results                            \n==============================================================================\nDep. Variable:                    mpg   R-squared:                       0.073\nModel:                            OLS   Adj. R-squared:                  0.070\nMethod:                 Least Squares   F-statistic:                     30.59\nDate:                Sat, 09 Aug 2025   Prob (F-statistic):           5.84e-08\nTime:                        23:14:18   Log-Likelihood:                -1346.4\nNo. Observations:                 392   AIC:                             2697.\nDf Residuals:                     390   BIC:                             2705.\nDf Model:                           1                                         \nCovariance Type:            nonrobust                                         \n==============================================================================\n                 coef    std err          t      P&gt;|t|      [0.025      0.975]\n------------------------------------------------------------------------------\nconst         35.8015      2.266     15.800      0.000      31.347      40.257\nspeed       -354.7055     64.129     -5.531      0.000    -480.788    -228.623\n==============================================================================\nOmnibus:                       27.687   Durbin-Watson:                   0.589\nProb(Omnibus):                  0.000   Jarque-Bera (JB):               18.976\nSkew:                           0.420   Prob(JB):                     7.57e-05\nKurtosis:                       2.323   Cond. No.                         169.\n==============================================================================\n\nNotes:\n[1] Standard Errors assume that the covariance matrix of the errors is correctly specified."
+  },
+  {
+    "objectID": "presentation.html#plots",
+    "href": "presentation.html#plots",
+    "title": "Project title",
+    "section": "Plots",
+    "text": "Plots"
+  },
+  {
+    "objectID": "presentation.html#plot-and-text",
+    "href": "presentation.html#plot-and-text",
+    "title": "Project title",
+    "section": "Plot and text",
+    "text": "Plot and text\n\n\n\nSome text\ngoes here"
+  },
+  {
+    "objectID": "presentation.html#tables",
+    "href": "presentation.html#tables",
+    "title": "Project title",
+    "section": "Tables",
+    "text": "Tables\nIf you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,\n\n\n\n\n\n\n\n\n\n\n\n\nspecies\n\n\n\nisland\n\n\n\nbill_length_mm\n\n\n\nbill_depth_mm\n\n\n\nflipper_length_mm\n\n\n\nbody_mass_g\n\n\n\nsex\n\n\n\n\n\n\n\n\n\n\n\n0\n\n\n\nAdelie\n\n\n\nTorgersen\n\n\n\n39.1\n\n\n\n18.7\n\n\n\n181.0\n\n\n\n3750.0\n\n\n\nMale\n\n\n\n\n\n\n\n1\n\n\n\nAdelie\n\n\n\nTorgersen\n\n\n\n39.5\n\n\n\n17.4\n\n\n\n186.0\n\n\n\n3800.0\n\n\n\nFemale\n\n\n\n\n\n\n\n2\n\n\n\nAdelie\n\n\n\nTorgersen\n\n\n\n40.3\n\n\n\n18.0\n\n\n\n195.0\n\n\n\n3250.0\n\n\n\nFemale\n\n\n\n\n\n\n\n4\n\n\n\nAdelie\n\n\n\nTorgersen\n\n\n\n36.7\n\n\n\n19.3\n\n\n\n193.0\n\n\n\n3450.0\n\n\n\nFemale\n\n\n\n\n\n\n\n5\n\n\n\nAdelie\n\n\n\nTorgersen\n\n\n\n39.3\n\n\n\n20.6\n\n\n\n190.0\n\n\n\n3650.0\n\n\n\nMale"
+  },
+  {
+    "objectID": "presentation.html#images",
+    "href": "presentation.html#images",
+    "title": "Project title",
+    "section": "Images",
+    "text": "Images\n\nImage credit: Danielle Navarro, Percolate."
+  },
+  {
+    "objectID": "presentation.html#math-expressions",
+    "href": "presentation.html#math-expressions",
+    "title": "Project title",
+    "section": "Math Expressions",
+    "text": "Math Expressions\nYou can write LaTeX math expressions inside a pair of dollar signs, e.g. $\\alpha+\\beta$ renders \\(\\alpha + \\beta\\). You can use the display style with double dollar signs:\n$$\\bar{X}=\\frac{1}{n}\\sum_{i=1}^nX_i$$\n\\[\n\\bar{X}=\\frac{1}{n}\\sum_{i=1}^nX_i\n\\]\nLimitations:\n\nThe source code of a LaTeX math expression must be in one line, unless it is inside a pair of double dollar signs, in which case the starting $$ must appear in the very beginning of a line, followed immediately by a non-space character, and the ending $$ must be at the end of a line, led by a non-space character;\nThere should not be spaces after the opening $ or before the closing $."
+  },
+  {
+    "objectID": "presentation.html#feeling-adventurous",
+    "href": "presentation.html#feeling-adventurous",
+    "title": "Project title",
+    "section": "Feeling adventurous?",
+    "text": "Feeling adventurous?\n\nYou are welcomed to use the default styling of the slides. In fact, that’s what I expect majority of you will do. You will differentiate yourself with the content of your presentation.\nBut some of you might want to play around with slide styling. Some solutions for this can be found at https://quarto.org/docs/presentations/revealjs."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "This project was developed by [Team Name] For INFO 523 - Data Mining and Discovery at the University of Arizona, taught by Dr. Greg Chism. The team is comprised of the following team members.\n\nTeam member 1: One sentence description of Team member 1 (e.g., year, major, etc.).\nTeam member 2: One sentence description of Team member 2 (e.g., year, major, etc.).\nTeam member 3: One sentence description of Team member 3 (e.g., year, major, etc.).\nTeam member 4: One sentence description of Team member 4 (e.g., year, major, etc.)."
+  }
+]
