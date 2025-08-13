@@ -1,5 +1,5 @@
 # Data
--   **[Dataset]**: I have chosen fake_or_real_news_data.csv which consists of all U.S. political news articles. The article consists of the following categorical columns: article #, title, text, and label. Each row contains information that is represented by its title, ID, content, and label which determines whether the article is fake or real.  
+-   **[fake_or_real_news_data.csv]**: The dataset contains information about U.S. political news articles and the following categorical columns: article #, title, text, and label. Each row contains information on the news that is represented by its title, ID, content, and label which determines whether it is fake or real.  
 
 # Codebook for [chosen] Dataset
 
