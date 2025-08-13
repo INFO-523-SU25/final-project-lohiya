@@ -10,7 +10,7 @@
 -   title: name of the article
 -   text: represents the content of the article
 -   label: the ground truth which classifies whether the news is fake or real
-     - it can be treated as a binary variable (i.e., 0 for fake, 1 for real)
+     - it can be treated as a binary variable (e.g., 0 for real, 1 for fake)
 
 ## Data Types:
 
