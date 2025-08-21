@@ -1,11 +1,11 @@
 ---
-title: "Project Title"
+title: "Balancing Accuracy and Interpretability in Fake News Detection: Logistic Regression vs. Random Forest"
 subtitle: "INFO 523 - Final Project"
 author: 
-  - name: "Team name - Team member 1, Team member 2,..."
+  - name: "Anvesh Lohiya"
     affiliations:
       - name: "College of Information Science, University of Arizona"
-description: "Project description"
+description: "Write-up"
 format:
    html:
     code-tools: true
@@ -20,4 +20,458 @@ jupyter: python3
 
 ## Abstract
 
-Add project abstract here.
+Recently, fake news has been spreading a lot globally, which really questions the credibility and trustworthiness of the news source. In order to stop falling for the fake news, we must do our own research by checking the news source and making sure it is credible; in addition, we should also consider verifying other news platforms are saying since this can mislead the viewers. This project builds a machine learning system that detects fake news using TF-IDF (Term Frequency Inverse Document Frequency) text features and well-known classification models. The approach is designed to be interpretable, so we not only predict whether an article is fake or real, but also identify the words and phrases most linked to fake content. Using a real-world dataset, we compare several models and show that interpretable methods can achieve strong accuracy while giving clear explanations for their predictions. This is useful for readers and viewers who want to understand why a news story may be unreliable.
+
+## Introduction
+
+The spread of fake news profoundly impacts the credibility and trustworthiness of news sources since news platforms and media have the tendency to exaggerate information just to get more public attention. A promising approach to predict the spread of fake news is to focus and analyze the language being used in the news since certain words and phrases often serve as strong indicators of whether the news is fake or real. In this project, I am using a dataset wherein each row consists of individual news articles, article title, and label (i.e., fake or real). Additional columns representing sentiment analysis were created using feature engineering. The actual names of the variables in the dataset are 'title', 'text', 'label', 'title_polarity', 'title_subjectivity', 'text_polarity', and 'text_subjectivity'.
+
+By applying TF-IDF feature extraction and machine learning methods, the goal is to not only classify news articles accurately, but also reveal patterns most predictive of fake news.
+
+In this project, I aim to answer the fundamental questions:\
+Can we build an effective and interpretable fake news classifier using TF-IDF and machine learning? Can we identify which words or phrases are most predictive of fake news content using categorical features?
+
+## Model & Mining Method
+
+We model the interaction between the features and words/phrases that represent fake news content. The dataset consists of article titles corresponding to their respective content which are classified as either fake or real.
+
+To identify the phrases and words that are representative of fake news, I first encoded the 'label' column (i.e., classifier) into binary variables (i.e., 0 for REAL, 1 for FAKE) and applied feature engineering techniques thereby devising sentiment-based features including title polarity, title subjectivity, text polarity, and text subjectivity.
+
+For preprocessing, I applied data cleaning methods by dropping irrelevant columns and splitting the model into a training and testing set to ensure proper model validation. Subsequently, I applied TF-IDF vectorization to transform textual content which emphasizes important words while reducing the impact of very common ones. Eventually, these features were combined with sentiment-based features to create a more informative set of predictors **that reflect both word usage and emotional tone.**
+
+In addition, both logistic regression and random forest were applied to this representation to compare predictive power. **Logistic regression was chosen for its interpretability, while random forest was selected for its ability to capture more complex, non-linear relationships.** Model performance was tested and visualized using classification metrics **such as accuracy, precision, recall, F1-score, and ROC AUC score (i.e., predictive power) along with a** confusion matrix, and sideways bar plot.
+
+## Justification of Approach
+
+This approach is motivated by both the importance of accuracy and interpretability in fake news detection. Word-based models like TF-IDF are effective with their ability to identify distinct words and phrases, but they miss out on rhetorical and emotional patterns. Incorporating sentiment features addresses this limitation by providing emotions and subjectivity**, which are often present in misleading or sensationalized content. Fake news frequently relies on emotionally charged language to attract attention, so combining linguistic and sentiment cues makes the classifier more robust.**
+
+The use of logistic regression provides a clear baseline that allows straightforward interpretation of feature weights, directly linking words or phrases to their predictive role. **This makes it easier to understand what signals the model relies on when labeling news as fake or real.** In contrast, the random forest classifier adds robustness by modeling non-linear interactions between features and reducing the risk of overfitting through ensemble averaging. **It also provides feature importance scores, which help identify not only single keywords, but also combinations of features that contribute to classification.**
+
+By combining text mining (TF-IDF) with sentiment analysis, the methodology balances interpretability and predictive power while also highlighting words, phrases, and emotional signals that are most indicative of fake news. **This combined approach ensures that the model is not only accurate, but it also provides insights that can guide further research into linguistic and psychological aspects of misinformation.**
+
+## Code
+
+### Import Libraries and Modules
+
+```{python}
+#| echo: true
+#| warning: false
+#| message: false
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import classification_report, confusion_matrix
+from textblob import TextBlob
+from scipy.sparse import hstack
+import re
+```
+
+### Data Cleaning
+
+```{python}
+#| echo: true
+#| warning: false
+#| message: false
+
+# Load the data
+fake_real_news = pd.read_csv("data/fake_or_real_news_data.csv")
+
+# Drop unnecessary column(s)
+fake_real_news_clean = fake_real_news.drop("Unnamed: 0", axis=1)
+
+# Print column names
+display(fake_real_news_clean.columns)
+
+# Print data types & shape of dataframe
+display(fake_real_news_clean.info())
+
+# Check for missing values
+display(fake_real_news_clean.isna().sum())
+
+# Display first few rows
+display(fake_real_news_clean.head())
+```
+
+### Confusion Matrix (Random Forest)
+
+```{python}
+#| echo: true
+#| warning: false
+#| message: false
+
+# Clean data
+fake_real_news.dropna(subset=['text'], inplace=True)
+fake_real_news['is_fake'] = fake_real_news['label']  # 1 = fake, 0 = real
+
+# Combine title and text
+fake_real_news['full_text'] = fake_real_news['title'].fillna('') + ' ' + fake_real_news['text'].fillna('')
+
+# Sentiment features
+fake_real_news['title_polarity'] = fake_real_news['title'].fillna('').apply(lambda x: TextBlob(x).sentiment.polarity)
+fake_real_news['title_subjectivity'] = fake_real_news['title'].fillna('').apply(lambda x: TextBlob(x).sentiment.subjectivity)
+fake_real_news['text_polarity'] = fake_real_news['text'].fillna('').apply(lambda x: TextBlob(x).sentiment.polarity)
+fake_real_news['text_subjectivity'] = fake_real_news['text'].fillna('').apply(lambda x: TextBlob(x).sentiment.subjectivity)
+
+# Split data into training & testing set
+X_train_text, X_test_text, y_train, y_test, train_sentiment, test_sentiment = train_test_split(
+    fake_real_news['full_text'],
+    fake_real_news['is_fake'],
+    fake_real_news[['title_polarity', 'title_subjectivity', 'text_polarity', 'text_subjectivity']],
+    test_size=0.2,
+    random_state=42
+)
+
+# TF-IDF vectorization 
+tf_idf = TfidfVectorizer(
+    ngram_range=(2,2), 
+    stop_words='english',
+    min_df=3,
+    max_df=0.95,
+    max_features=20000,
+    token_pattern=r'(?u)\b[a-zA-Z][a-zA-Z]+\b',
+    sublinear_tf=True
+)
+
+X_train_tfidf = tf_idf.fit_transform(X_train_text)
+X_test_tfidf = tf_idf.transform(X_test_text)
+
+# Combine TF-IDF and sentiment features
+X_train_combined = hstack([X_train_tfidf, train_sentiment])
+X_test_combined = hstack([X_test_tfidf, test_sentiment])
+
+# Train model using random forest
+rf = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)
+rf.fit(X_train_combined, y_train)
+
+# Predictions & evaluation
+y_pred = rf.predict(X_test_combined)
+print(classification_report(y_test, y_pred))
+
+# Probabilities for positive class
+y_proba = rf.predict_proba(X_test_combined)[:, 1]
+
+# ROC AUC score
+roc_auc = roc_auc_score(y_test, y_proba)
+print(f"ROC AUC Score \033[91m(Random Forest)\033[0m: {roc_auc:.4f}")
+
+# Display confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=["Real", "Fake"],
+            yticklabels=["Real", "Fake"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Fake News Confusion Matrix")
+plt.show()
+
+# Get feature names directly from the vectorizer used to fit X_train_tfidf
+feature_names = tf_idf.get_feature_names_out()
+
+# Feature importance (phrases & sentiment)
+importances = rf.feature_importances_
+
+min_len = min(len(feature_names), len(importances))
+feature_names = feature_names[:min_len]
+importances = importances[:min_len]
+
+# Put into DataFrame
+feat_df = pd.DataFrame({
+    "feature": feature_names,
+    "importance": importances
+})
+
+# Sort by importance
+# Select top 20
+feat_df = feat_df.sort_values("importance", ascending=False).head(20)
+
+```
+
+### Sideways Bar Plot
+
+### Determine whether top 20 phrases are REAL or FAKE
+
+```{python}
+#| echo: true
+#| warning: false
+#| message: false
+
+# Train on phrases only
+
+# Make a copy to secure original data
+df = fake_real_news_clean.copy()
+df = df.dropna(subset=['text'])
+df['full_text'] = df['title'].fillna('') + ' ' + df['text'].fillna('')
+df['label_bin'] = df['label'].map({'FAKE': 1, 'REAL': 0})
+
+# Year-removal
+def clean_text(t): 
+    return re.sub(r'\b\d{4}\b', '', t)
+
+X = df['full_text'].apply(clean_text)
+y = df['label_bin']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Get feature names
+tf_idf = TfidfVectorizer(
+    ngram_range=(2,3),     # phrases only
+    stop_words='english',  # keep stop-words so phrases like "new york" remain intact
+    min_df=3,              # lower so phrases aren’t filtered out
+    max_df=0.95,
+    max_features=20000,
+    token_pattern=r'(?u)\b[a-zA-Z][a-zA-Z]+\b', # words with letters only
+    sublinear_tf=True
+)
+
+X_train_tfidf = tf_idf.fit_transform(X_train)
+X_test_tfidf = tf_idf.transform(X_test)
+
+feature_names = tf_idf.get_feature_names_out()
+
+# Feature importances from RF
+importances = rf.feature_importances_
+
+min_len = min(len(feature_names), len(importances))
+feature_names = feature_names[:min_len]
+importances = importances[:min_len]
+
+# Build DataFrame
+feat_df = pd.DataFrame({
+    "feature": feature_names,
+    "importance": importances
+})
+
+# Split training matrix by label
+fake_mask = (y_train == 1).values
+real_mask = (y_train == 0).values
+
+# Compute average TF-IDF for each phrase in fake vs real docs
+fake_avg = np.asarray(X_train_tfidf[fake_mask].mean(axis=0)).ravel()
+real_avg = np.asarray(X_train_tfidf[real_mask].mean(axis=0)).ravel()
+
+# Add to DataFrame
+feat_df["fake_avg"] = fake_avg[:min_len]
+feat_df["real_avg"] = real_avg[:min_len]
+
+# Determine whether phrase sounds real or fake
+feat_df["leans_fake"] = feat_df["fake_avg"] > feat_df["real_avg"]
+feat_df["class_assoc"] = feat_df["leans_fake"].map({True: "FAKE", False: "REAL"})
+
+# Sort by importance 
+# Select top 20
+top20 = feat_df.sort_values("importance", ascending=False).head(20)
+
+# Reset index so first column is 'rank'
+top20_reset = top20.reset_index(drop=True).reset_index()
+top20_reset.rename(columns={"index": "rank"}, inplace=True)
+top20_reset["rank"] += 1
+
+print(top20_reset[["rank", "feature", "importance", "class_assoc"]])
+
+# Bar plot with color coding
+plt.figure(figsize=(9,6))
+sns.barplot(
+    data=top20,
+    x="importance",
+    y="feature",
+    hue="class_assoc",
+    dodge=False,
+    palette={"FAKE":"red", "REAL":"green"}
+)
+plt.title("Top 20 Important Features (with Fake/Real Lean)")
+plt.xlabel("Importance")
+plt.ylabel("Phrase")
+plt.show()
+
+```
+
+### Determine coefficients of phrases (Logistic Regression)
+
+```{python}
+#| echo: true
+#| warning: false
+#| message: false
+
+# Train a Logistic Regression classifier
+log_reg = LogisticRegression(max_iter=1000, class_weight="balanced", C=10)
+log_reg.fit(X_train_tfidf, y_train)
+
+# Get feature names
+feature_names = tf_idf.get_feature_names_out()
+
+# Get coefficients (one coefficient per feature)
+coefs = log_reg.coef_[0]
+
+# Build DataFrame for inspection
+coef_df = pd.DataFrame({
+    "feature": feature_names,
+    "coefficient": coefs
+})
+
+# Sort by absolute value of coefficient (strongest predictors first)
+coef_df = coef_df.reindex(coef_df.coefficient.abs().sort_values(ascending=False).index)
+
+# Display top 20 fake predictors (positive coefficients → FAKE)
+top_fake = coef_df.head(20)
+
+print("\nTop 20 phrases most predictive of FAKE news (Logistic Regression):")
+for feat, coef in zip(top_fake['feature'], top_fake['coefficient']):
+    print(f"{feat}: {coef:.4f}")
+
+# Display bar plot
+plt.figure(figsize=(8,6))
+sns.barplot(x="coefficient", y="feature", data=top_fake, palette="coolwarm")
+plt.title("Top 20 Phrases Predicting FAKE News (Logistic Regression)")
+plt.xlabel("Coefficient (positive = FAKE, negative = REAL)")
+plt.ylabel("Feature")
+plt.show()
+
+```
+
+### Confusion Matrix (Logistic Regression)
+
+```{python}
+#| echo: true
+#| warning: false
+#| message: false
+
+df.dropna(subset=['text'], inplace=True)
+df['is_fake'] = df['label'] # 1 = fake, 0 = real
+
+# Combine title & text
+df['full_text'] = df['title'].fillna('') + ' ' + df['text'].fillna('')
+
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(
+    df['full_text'], 
+    df['is_fake'], 
+    test_size=0.2, 
+    random_state=42
+)
+
+# TF-IDF vectorization
+tf_idf = TfidfVectorizer(ngram_range=(2,3), stop_words="english", max_df=0.95, min_df=5, max_features=20000)
+X_train_vec = tf_idf.fit_transform(X_train)
+X_test_vec = tf_idf.transform(X_test)
+
+# Sentiment features
+def get_sentiment(texts):
+    polarity = []
+    subjectivity = []
+    for t in texts:
+        blob = TextBlob(str(t))
+        polarity.append(blob.sentiment.polarity)
+        subjectivity.append(blob.sentiment.subjectivity)
+    return pd.DataFrame({"polarity": polarity, "subjectivity": subjectivity})
+
+train_sentiment = get_sentiment(X_train)
+test_sentiment = get_sentiment(X_test)
+
+# Merge TF-IDF & sentiment
+X_train_final = hstack([X_train_vec, train_sentiment])
+X_test_final = hstack([X_test_vec, test_sentiment])
+
+# Train model using logistic regression
+clf = LogisticRegression(max_iter=1000)
+clf.fit(X_train_final, y_train)
+
+# Predict & evaluate
+y_pred = clf.predict(X_test_final)
+y_proba = clf.predict_proba(X_test_final)[:, 1]
+
+print(classification_report(y_test, y_pred))
+
+# ROC AUC score
+roc_auc = roc_auc_score(y_test, y_proba)
+print(f"ROC AUC Score (Logistic Regression): {roc_auc:.4f}")
+
+# Display confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=["Real", "Fake"], yticklabels=["Real", "Fake"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Fake News Confusion Matrix (LogReg + Sentiment)")
+plt.show()
+
+```
+
+### Determine weights of phrases (Logistic Regression)
+
+```{python}
+#| echo: true
+#| warning: false
+#| message: false
+
+# Define and fit vectorizer
+tf_idf = TfidfVectorizer(
+    ngram_range=(2,3),   # phrases
+    stop_words='english',
+    min_df=3,
+    max_df=0.95,
+    max_features=20000,
+    token_pattern=r'(?u)\b[a-zA-Z][a-zA-Z]+\b',
+    sublinear_tf=True
+)
+
+X_train_tfidf = tf_idf.fit_transform(X_train)
+
+# Train Logistic Regression classifier
+log_reg = LogisticRegression(max_iter=1000, class_weight="balanced")
+log_reg.fit(X_train_tfidf, y_train)
+
+feature_names = tf_idf.get_feature_names_out()
+
+# Get coefficients
+coefs = log_reg.coef_[0]
+
+# Convert coefficients to weights (odds ratios)
+weights = np.exp(coefs)
+
+# Build DataFrame
+weights_df = pd.DataFrame({
+    "feature": feature_names,
+    "coefficient": coefs,
+    "weight": weights
+})
+
+# Sort by coefficient (positive ones are FAKE predictors)
+weights_df = weights_df.sort_values("coefficient", ascending=False)
+
+# Show top 20 FAKE predictors
+top_fake = weights_df.head(20)
+
+print("\nTop 20 phrases most predictive of FAKE news (Logistic Regression Weights):")
+for feat, coef, w in zip(top_fake['feature'], top_fake['coefficient'], top_fake['weight']):
+    print(f"{feat}: coef={coef:.4f}, weight={w:.4f}")
+
+# Display bar plot of weights
+plt.figure(figsize=(8,6))
+sns.barplot(x="weight", y="feature", data=top_fake, palette="coolwarm")
+plt.title("Top 20 Phrases Predicting FAKE News (Logistic Regression Weights)")
+plt.xlabel("Weight (Odds Ratio)")
+plt.ylabel("Feature")
+plt.show()
+
+```
+
+## Discussion of Results
+
+In this project, I used **Logistic Regression** to interpret feature importance by examining coefficients and identifying phrases most predictive of fake vs. real news. In parallel, I used a **Random Forest classifier** primarily for robust classification performance and complementary feature ranking. Together, these models provided both predictive accuracy and interpretability.
+
+The bar plot using random forest classifier highlights the **top 20 phrases that the Random Forest model relies on to distinguish fake news from real news**, ranked by their importance in the model. It’s effectively a visual explanation of phrases the model pays attention to when making predictions, e.g., "president elect trump" being the most important means that this phrase was very helpful to the model in **separating FAKE from REAL**.
+
+After evaluating both logistic and random forest regression, the ROC AUC scores were 0.9760 and 0.9595, respectively. These results indicate that logistic regression can correctly distinguish between fake and real news **97.6% of the time**, while random forest achieves a slightly lower performance of **95.95%**. **Such high scores suggest that both models are equally capable of performing the task, with minimal difference in their discriminative ability.**
+
+The confusion matrix further highlights the effectiveness of both models. For logistic regression, fake news predictions achieved a **precision of 0.90**, **recall of 0.93**, and **F1-score of 0.91**. Real news predictions showed a **precision of 0.93**, **recall of 0.90**, and **F1-score of 0.91**, with an **overall accuracy of 91%**. In contrast, the random forest model had a slightly lower performance than logistic regression with an **overall accuracy of 90%**, correctly classifying true positives and true negatives at a very similar frequency. **This indicates that while random forest provides strong interpretability, logistic regression adds a small, but measurable improvement in predictive performance.**
+
+In addition, the two-way bar plot provided insights into which words and phrases are most indicative of fake versus real news. Words associated with **fake news carried positive coefficients**, while those linked to **real news carried negative coefficients**.
+
+Here, the coefficients represent how much each feature contributes in the log-odds space, while the weights calculated as exp(coefficient) show the multiplicative effect on the odds. For example, a coefficient of 0.7 means $\exp(0.7)$ **≈** 2**,** which doubles the odds of being fake. Weights greater than 1 increase the odds of fake news, while weights less than 1 suggest that a feature leans toward real news.
+
+This project shows that TF-IDF with machine learning can build an accurate and interpretable fake news classifier. Logistic Regression and Random Forest both achieved high ROC AUC scores (\>0.95), confirming strong predictive ability. This project analysis also highlights the linguistic patterns that drive these predictions. Feature analysis highlighted the key phrases most indicative of fake versus real news, however, some predictive words showed discrepancies. This ultimately conveys that interpretability is not always perfectly reliable.
