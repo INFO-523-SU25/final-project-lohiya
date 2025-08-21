@@ -1,7 +1,7 @@
 ---
-title: "Project title"
+title: "Balancing Accuracy and Interpretability in Fake News Detection: Logistic Regression vs. Random Forest"
 subtitle: "INFO 523 - Summer 2025 - Final Project"
-author: "Author names"
+author: "Anvesh Lohiya"
 title-slide-attributes:
   data-background-image: images/watercolour_sys02_img34_teacup-ocean.jpg
   data-background-size: stretch
@@ -17,14 +17,48 @@ execute:
   echo: false
 ---
 
+```{=html}
+<style>
+/* Adjust the title block on the title slide */
+.reveal .quarto-title-block .title {
+  font-size: 40pt !important; 
+  max-width: 100%;
+  margin-left: 2px;
+  margin-right: 2px;
+  text-align: center;
+}
+
+.reveal .quarto-title-block .subtitle {
+  font-size: 24pt !important;
+}
+
+.reveal .quarto-title-block .author {
+  font-size: 20pt !important;
+}
+</style>
+```
+
+------------------------------------------------------------------------
+
 ```{python}
 #| label: load-packages
 #| include: false
 
 # Load packages here
+import numpy as np
 import pandas as pd
 import seaborn as sns
-
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import classification_report, confusion_matrix
+from textblob import TextBlob
+from scipy.sparse import hstack
+import re
 ```
 
 ```{python}
@@ -51,117 +85,517 @@ mtcars['speed'] = mtcars['horsepower'] / mtcars['weight']
 penguins = sns.load_dataset('penguins').dropna()
 ```
 
-# Using Quarto for presentations
+# Introduction
 
-## Quarto
+## Background Information
 
--   The presentation is created using the Quarto CLI
+-   Spread of fake news profoundly impacts the credibility and trustworthiness of news sources.
 
--   `##` sets the start of a new slide
+    -   News platforms and media have the tendency to exaggerate information just to get more public attention
 
-## Layouts
+    -   A promising approach - to focus and analyze the language being used in the news
 
-You can use plain text
+        -   Certain words and phrases often serve as strong indicators of whether the news is fake or real
 
-::: columns
-::: {.column width="40%"}
--   or bullet points[^1]
-:::
+    -   In this project, I am using a dataset wherein each row consists of individual news articles, article title, and label (i.e., fake or real)
 
-::: {.column width="60%"}
-or in two columns
-:::
-:::
+    -   Additional columns to represent sentiment analysis were created using feature engineering
 
-[^1]: And add footnotes
+        -   Actual names of the variables in the dataset - 'title', 'text', 'label', 'title_polarity', 'title_subjectivity', 'text_polarity', and 'text_subjectivity'.
 
--   like
+By applying TF-IDF feature extraction and machine learning methods, the goal is to not only classify news articles accurately, but also reveal patterns most predictive of fake news.
 
--   this
+## Question
 
-## Code
+-   Can we build an effective and interpretable fake news classifier using TF-IDF and machine learning?
+-   Can we identify which words or phrases are most predictive of fake news content using categorical features?
 
-```{python}
-from sklearn.linear_model import LinearRegression
-import statsmodels.api as sm
-import pandas as pd
+## Method of Approach
 
-# Fit a linear regression model
-X = mtcars[['speed']]
-y = mtcars['mpg']
-model = LinearRegression().fit(X, y)
+-   Cleaned data thereby dropping irrelevant columns
 
-# Summary of the model
-X2 = sm.add_constant(X)
-est = sm.OLS(y, X2)
-est2 = est.fit()
-print(est2.summary())
-```
+-   Feature engineering techniques: generated columns representing sentiment analysis
 
-## Plots
+    -   Column names are 'title', 'text', 'label', 'title_polarity', 'title_subjectivity', 'text_polarity', and 'text_subjectivity.
 
-```{python}
-penguins['species'] = penguins['species'].apply(lambda x: "Adelie" if x == "Adelie" else "Other")
-sns.scatterplot(data=penguins, x='flipper_length_mm', y='body_mass_g', hue='species')
-plt.show()
-```
+-   Trained model using logistic regression, random forest, and TF-IDF (Term Frequency Inverse Document Frequency)
 
-## Plot and text
+-   Compared models using ROC AUC, F1-score, recall, accuracy, and precision
+
+## Column Definitions
 
 ::: columns
-::: {.column width="50%"}
--   Some text
+Some columns to describe from dataset:
 
--   goes here
+-   **#:** article number
+
+-   **title:** name of news article
+
+-   **text:** contents of the article
+
+-   **label:** classifies the news as either FAKE or REAL
+
+However, I dropped the **'\#'** column since it's irrelevant.
 :::
 
-::: {.column width="50%"}
+# Modeling
+
+## Dataset - First Few Rows
+
+![](images/data_head-2.png){fig-align="center" width="12in" height="4in"}
+
 ```{python}
+#| echo: false
+#| results: hide
+#| output: false
+#| warning: false
+#| message: false
+
+# Load the data
+fake_real_news = pd.read_csv("data/fake_or_real_news_data.csv")
+
+# Drop unnecessary column(s)
+fake_real_news_clean = fake_real_news.drop("Unnamed: 0", axis=1)
+
+# Print column names
+fake_real_news_clean.columns
+
+# Print data types & shape of dataframe
+fake_real_news_clean.info()
+
+# Check for missing values
+fake_real_news_clean.isna().sum()
+
+# Display a few rows
+fake_real_news_clean.head()
+
+```
+
+## Bar Plot - Top 20 Features (Random Forest)
+
+![](images/bar-plot-top20-color-code.png){fig-align="center" width="12in" height="6in"}
+
+## Bar Plot - Top 20 Features (Interpretation)
+
+-   The bar plot using random forest classifier highlights the **top 20 phrases that the RF model relies on to distinguish fake news from real news**, ranked by their importance.
+
+-   The model pays most attention to the top 20 phrases when deciding if an article is **fake or real**.
+
+    -   e.g., "president called trump" is the strongest signal feature in the trained model, while "obama called" is still useful, but weaker.
+
+## Confusion Matrix (Random Forest)
+
+![](images/confusion_matrix_rf.png){fig-align="center" width="6in" height="6in"}
+
+```{python}
+#| echo: false
+#| results: hide
+#| output: false
 #| warning: false
 #| fig.width: 5.5
-fig, ax = plt.subplots(figsize=(5.5, 5.5 * 0.618))
-sns.boxplot(data=penguins, x='bill_length_mm', y='species', hue='species', ax=ax)
+
+# Clean data
+fake_real_news.dropna(subset=['text'], inplace=True)
+fake_real_news['is_fake'] = fake_real_news['label']  # 1 = fake, 0 = real
+
+# Combine title and text
+fake_real_news['full_text'] = fake_real_news['title'].fillna('') + ' ' + fake_real_news['text'].fillna('')
+
+# Sentiment features
+fake_real_news['title_polarity'] = fake_real_news['title'].fillna('').apply(lambda x: TextBlob(x).sentiment.polarity)
+fake_real_news['title_subjectivity'] = fake_real_news['title'].fillna('').apply(lambda x: TextBlob(x).sentiment.subjectivity)
+fake_real_news['text_polarity'] = fake_real_news['text'].fillna('').apply(lambda x: TextBlob(x).sentiment.polarity)
+fake_real_news['text_subjectivity'] = fake_real_news['text'].fillna('').apply(lambda x: TextBlob(x).sentiment.subjectivity)
+
+# Split data into training & testing set
+X_train_text, X_test_text, y_train, y_test, train_sentiment, test_sentiment = train_test_split(
+    fake_real_news['full_text'],
+    fake_real_news['is_fake'],
+    fake_real_news[['title_polarity', 'title_subjectivity', 'text_polarity', 'text_subjectivity']],
+    test_size=0.2,
+    random_state=42
+)
+
+# TF-IDF vectorization 
+tf_idf = TfidfVectorizer(
+    ngram_range=(2,2), 
+    stop_words='english',
+    min_df=3,
+    max_df=0.95,
+    max_features=20000,
+    token_pattern=r'(?u)\b[a-zA-Z][a-zA-Z]+\b',
+    sublinear_tf=True
+)
+
+X_train_tfidf = tf_idf.fit_transform(X_train_text)
+X_test_tfidf = tf_idf.transform(X_test_text)
+
+# Combine TF-IDF and sentiment features
+X_train_combined = hstack([X_train_tfidf, train_sentiment])
+X_test_combined = hstack([X_test_tfidf, test_sentiment])
+
+# Train model using random forest
+rf = RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1)
+rf.fit(X_train_combined, y_train)
+
+# Predictions & evaluation
+y_pred = rf.predict(X_test_combined)
+print(classification_report(y_test, y_pred))
+
+# Probabilities for positive class
+y_proba = rf.predict_proba(X_test_combined)[:, 1]
+
+# ROC AUC score
+roc_auc = roc_auc_score(y_test, y_proba)
+print(f"ROC AUC Score \033[91m(Random Forest)\033[0m: {roc_auc:.4f}")
+
+# Display confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+            xticklabels=["Real", "Fake"],
+            yticklabels=["Real", "Fake"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Fake News Confusion Matrix")
 plt.show()
+
+# Get feature names directly from the vectorizer used to fit X_train_tfidf
+feature_names = tf_idf.get_feature_names_out()
+
+# Feature importance (phrases & sentiment)
+importances = rf.feature_importances_
+
+min_len = min(len(feature_names), len(importances))
+feature_names = feature_names[:min_len]
+importances = importances[:min_len]
+
+# Put into DataFrame
+feat_df = pd.DataFrame({
+    "feature": feature_names,
+    "importance": importances
+})
+
+# Sort by importance
+# Select top 20
+feat_df = feat_df.sort_values("importance", ascending=False).head(20)
+
 ```
-:::
-:::
-
-# A new section...
-
-## Tables
-
-If you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,
 
 ```{python}
-penguins.head().to_html()
+#| echo: false
+#| results: hide
+#| output: false
+#| warning: false
+#| message: false
+
+# Train on phrases only
+
+# Make a copy to secure original data
+df = fake_real_news_clean.copy()
+df = df.dropna(subset=['text'])
+df['full_text'] = df['title'].fillna('') + ' ' + df['text'].fillna('')
+df['label_bin'] = df['label'].map({'FAKE': 1, 'REAL': 0})
+
+# Year-removal
+def clean_text(t): 
+    return re.sub(r'\b\d{4}\b', '', t)
+
+X = df['full_text'].apply(clean_text)
+y = df['label_bin']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Get feature names
+tf_idf = TfidfVectorizer(
+    ngram_range=(2,3),     # phrases only
+    stop_words='english',  # keep stop-words so phrases like "new york" remain intact
+    min_df=3,              # lower so phrases aren’t filtered out
+    max_df=0.95,
+    max_features=20000,
+    token_pattern=r'(?u)\b[a-zA-Z][a-zA-Z]+\b', # words with letters only
+    sublinear_tf=True
+)
+
+X_train_tfidf = tf_idf.fit_transform(X_train)
+X_test_tfidf = tf_idf.transform(X_test)
+
+feature_names = tf_idf.get_feature_names_out()
+
+# Feature importances from RF
+importances = rf.feature_importances_
+
+min_len = min(len(feature_names), len(importances))
+feature_names = feature_names[:min_len]
+importances = importances[:min_len]
+
+# Build DataFrame
+feat_df = pd.DataFrame({
+    "feature": feature_names,
+    "importance": importances
+})
+
+# Split training matrix by label
+fake_mask = (y_train == 1).values
+real_mask = (y_train == 0).values
+
+# Compute average TF-IDF for each phrase in fake vs real docs
+fake_avg = np.asarray(X_train_tfidf[fake_mask].mean(axis=0)).ravel()
+real_avg = np.asarray(X_train_tfidf[real_mask].mean(axis=0)).ravel()
+
+# Add to DataFrame
+feat_df["fake_avg"] = fake_avg[:min_len]
+feat_df["real_avg"] = real_avg[:min_len]
+
+# Determine whether phrase sounds real or fake
+feat_df["leans_fake"] = feat_df["fake_avg"] > feat_df["real_avg"]
+feat_df["class_assoc"] = feat_df["leans_fake"].map({True: "FAKE", False: "REAL"})
+
+# Sort by importance 
+# Select top 20
+top20 = feat_df.sort_values("importance", ascending=False).head(20)
+
+# Reset index so first column is 'rank'
+top20_reset = top20.reset_index(drop=True).reset_index()
+top20_reset.rename(columns={"index": "rank"}, inplace=True)
+top20_reset["rank"] += 1
+
+print(top20_reset[["rank", "feature", "importance", "class_assoc"]])
+
+# Bar plot with color coding
+plt.figure(figsize=(9,6))
+sns.barplot(
+    data=top20,
+    x="importance",
+    y="feature",
+    hue="class_assoc",
+    dodge=False,
+    palette={"FAKE":"red", "REAL":"green"}
+)
+plt.title("Top 20 Important Features (with Fake/Real Lean)")
+plt.xlabel("Importance")
+plt.ylabel("Phrase")
+plt.show()
+
 ```
 
-## Images
+## Bar Plot - Coefficients of Phrases (Logistic Regression)
 
-![Image credit: Danielle Navarro, Percolate.](images/watercolour_sys02_img34_teacup-ocean.png){fig-align="center" width="500"}
+![](images/coeff_phrase-bar_plot-2.png){fig-align="center" width="8in" height="6in"}
 
-## Math Expressions {.smaller}
+```{python}
+#| echo: false
+#| results: hide
+#| output: false
+#| warning: false
+#| message: false
 
-You can write LaTeX math expressions inside a pair of dollar signs, e.g. \$\\alpha+\\beta\$ renders $\alpha + \beta$. You can use the display style with double dollar signs:
+# Train a Logistic Regression classifier
+log_reg = LogisticRegression(max_iter=1000, class_weight="balanced", C=10)
+log_reg.fit(X_train_tfidf, y_train)
 
-```         
-$$\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i$$
+# Get feature names
+feature_names = tf_idf.get_feature_names_out()
+
+# Get coefficients (one coefficient per feature)
+coefs = log_reg.coef_[0]
+
+# Build DataFrame for inspection
+coef_df = pd.DataFrame({
+    "feature": feature_names,
+    "coefficient": coefs
+})
+
+# Sort by absolute value of coefficient (strongest predictors first)
+coef_df = coef_df.reindex(coef_df.coefficient.abs().sort_values(ascending=False).index)
+
+# Display top 20 fake predictors (positive coefficients → FAKE)
+top_fake = coef_df.head(20)
+
+print("\nTop 20 phrases most predictive of FAKE news (Logistic Regression):")
+for feat, coef in zip(top_fake['feature'], top_fake['coefficient']):
+    print(f"{feat}: {coef:.4f}")
+
+# Display bar plot
+plt.figure(figsize=(8,6))
+sns.barplot(x="coefficient", y="feature", data=top_fake, palette="coolwarm")
+plt.title("Top 20 Phrases Predicting FAKE News (Logistic Regression)")
+plt.xlabel("Coefficient (positive = FAKE, negative = REAL)")
+plt.ylabel("Feature")
+plt.show()
+
+
+
+
+
+
 ```
 
-$$
-\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i
-$$
+## Confusion Matrix (Logistic Regression)
 
-Limitations:
+![](images/confusion_matrix_lr.png){fig-align="center" width="6in" height="6in"}
 
-1.  The source code of a LaTeX math expression must be in one line, unless it is inside a pair of double dollar signs, in which case the starting `$$` must appear in the very beginning of a line, followed immediately by a non-space character, and the ending `$$` must be at the end of a line, led by a non-space character;
+```{python}
+#| echo: false
+#| results: hide
+#| output: false
+#| warning: false
+#| message: false
 
-2.  There should not be spaces after the opening `$` or before the closing `$`.
+df.dropna(subset=['text'], inplace=True)
+df['is_fake'] = df['label'] # 1 = fake, 0 = real
 
-# Wrap up
+# Combine title & text
+df['full_text'] = df['title'].fillna('') + ' ' + df['text'].fillna('')
 
-## Feeling adventurous?
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(
+    df['full_text'], 
+    df['is_fake'], 
+    test_size=0.2, 
+    random_state=42
+)
 
--   You are welcomed to use the default styling of the slides. In fact, that's what I expect majority of you will do. You will differentiate yourself with the content of your presentation.
+# TF-IDF vectorization
+tf_idf = TfidfVectorizer(ngram_range=(2,3), stop_words="english", max_df=0.95, min_df=5, max_features=20000)
+X_train_vec = tf_idf.fit_transform(X_train)
+X_test_vec = tf_idf.transform(X_test)
 
--   But some of you might want to play around with slide styling. Some solutions for this can be found at https://quarto.org/docs/presentations/revealjs.
+# Sentiment features
+def get_sentiment(texts):
+    polarity = []
+    subjectivity = []
+    for t in texts:
+        blob = TextBlob(str(t))
+        polarity.append(blob.sentiment.polarity)
+        subjectivity.append(blob.sentiment.subjectivity)
+    return pd.DataFrame({"polarity": polarity, "subjectivity": subjectivity})
+
+train_sentiment = get_sentiment(X_train)
+test_sentiment = get_sentiment(X_test)
+
+# Merge TF-IDF & sentiment
+X_train_final = hstack([X_train_vec, train_sentiment])
+X_test_final = hstack([X_test_vec, test_sentiment])
+
+# Train model using logistic regression
+clf = LogisticRegression(max_iter=1000)
+clf.fit(X_train_final, y_train)
+
+# Predict & evaluate
+y_pred = clf.predict(X_test_final)
+y_proba = clf.predict_proba(X_test_final)[:, 1]
+
+print(classification_report(y_test, y_pred))
+
+# ROC AUC score
+roc_auc = roc_auc_score(y_test, y_proba)
+print(f"ROC AUC Score (Logistic Regression): {roc_auc:.4f}")
+
+# Display confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=["Real", "Fake"], yticklabels=["Real", "Fake"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Fake News Confusion Matrix (LogReg + Sentiment)")
+plt.show()
+
+```
+
+## Bar Plot - Weights of Phrases (Logistic Regression)
+
+![](images/weights_phrase-bar_plot_lr-3.png){fig-align="center" width="10in" height="5.5in"}
+
+```{python}
+#| echo: false
+#| results: hide
+#| output: false
+#| warning: false
+#| message: false
+
+# Define and fit vectorizer
+tf_idf = TfidfVectorizer(
+    ngram_range=(2,3),   # phrases
+    stop_words='english',
+    min_df=3,
+    max_df=0.95,
+    max_features=20000,
+    token_pattern=r'(?u)\b[a-zA-Z][a-zA-Z]+\b',
+    sublinear_tf=True
+)
+
+X_train_tfidf = tf_idf.fit_transform(X_train)
+
+# Train Logistic Regression classifier
+log_reg = LogisticRegression(max_iter=1000, class_weight="balanced")
+log_reg.fit(X_train_tfidf, y_train)
+
+feature_names = tf_idf.get_feature_names_out()
+
+# Get coefficients
+coefs = log_reg.coef_[0]
+
+# Convert coefficients to weights (odds ratios)
+weights = np.exp(coefs)
+
+# Build DataFrame
+weights_df = pd.DataFrame({
+    "feature": feature_names,
+    "coefficient": coefs,
+    "weight": weights
+})
+
+# Sort by coefficient (positive ones are FAKE predictors)
+weights_df = weights_df.sort_values("coefficient", ascending=False)
+
+# Show top 20 FAKE predictors
+top_fake = weights_df.head(20)
+
+print("\nTop 20 phrases most predictive of FAKE news (Logistic Regression Weights):")
+for feat, coef, w in zip(top_fake['feature'], top_fake['coefficient'], top_fake['weight']):
+    print(f"{feat}: coef={coef:.4f}, weight={w:.4f}")
+
+# Display bar plot of weights
+plt.figure(figsize=(8,6))
+sns.barplot(x="weight", y="feature", data=top_fake, palette="coolwarm")
+plt.title("Top 20 Phrases Predicting FAKE News (Logistic Regression Weights)")
+plt.xlabel("Weight (Odds Ratio)")
+plt.ylabel("Feature")
+plt.show()
+
+```
+
+## Coefficients & Weights Plot (Interpretation)
+
+-   The two-way bar plot provides insights into which words and phrases are most indicative of fake versus real news.
+
+-   Words associated with **fake news carried positive coefficients**, while those linked to **real news carried negative coefficients**.
+
+    -   Coefficients: represent how much each feature contributes in the log-odds space
+
+    -   Weights calculated as exp(coefficient) show the multiplicative effect on the odds.
+
+## Evaluating Logistic & Random Forest Regression
+
+-   **ROC AUC (LR) = 0.9760, ROC AUC (RF) = 0.9595**
+
+    -   LR can correctly distinguish between fake and real news **97.6% of the time**
+
+    -   RF achieves a slightly lower performance of **95.95%**.
+
+-   The confusion matrix further highlights the effectiveness of both models.
+
+    -   Both RF and LR model had a very similar performance in terms of their ability correctly classifying true positives and true negatives.
+
+## Key Takeaway
+
+-   This project shows that TF-IDF with machine learning can build an accurate and interpretable fake news classifier.
+
+-   LR and RF both achieved high ROC AUC scores (\>0.95), confirming strong predictive ability.
+
+-   This project analysis also highlights the linguistic patterns that drive these predictions.
+
+-   Feature analysis highlighted key phrases most indicative of fake vs. real news.
+
+    -   Some predictive words showed discrepancies, ultimately conveying that interpretability is not always perfectly reliable.
+
+# Thank You!
