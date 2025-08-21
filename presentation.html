@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-html/tabby.min.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -9,8 +9,8 @@
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.7.32">
 
-  <meta name="author" content="Author names">
-  <title>Detecting Fake News with TF-IDF and Machine Learning – Project title</title>
+  <meta name="author" content="Anvesh Lohiya">
+  <title>Detecting Fake News with TF-IDF and Machine Learning – Balancing Accuracy and Interpretability in Fake News Detection: Logistic Regression vs.&nbsp;Random Forest</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -121,387 +121,210 @@
       margin-right: 0; 
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+  
+  <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 </head>
 <body class="quarto-light">
   <div class="reveal">
     <div class="slides">
 
 <section id="title-slide" data-background-image="images/watercolour_sys02_img34_teacup-ocean.jpg" data-background-opacity="0.7" data-background-size="stretch" data-slide-number="none" class="quarto-title-block center">
-  <h1 class="title">Project title</h1>
+  <h1 class="title">Balancing Accuracy and Interpretability in Fake News Detection: Logistic Regression vs.&nbsp;Random Forest</h1>
   <p class="subtitle">INFO 523 - Summer 2025 - Final Project</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
 <div class="quarto-title-author-name">
-Author names 
+Anvesh Lohiya 
 </div>
 </div>
 </div>
+
+</section>
+<section class="slide level2">
+
+<style>
+/* Adjust the title block on the title slide */
+.reveal .quarto-title-block .title {
+  font-size: 40pt !important; 
+  max-width: 100%;
+  margin-left: 2px;
+  margin-right: 2px;
+  text-align: center;
+}
+
+.reveal .quarto-title-block .subtitle {
+  font-size: 24pt !important;
+}
+
+.reveal .quarto-title-block .author {
+  font-size: 20pt !important;
+}
+</style>
+</section>
+<section class="slide level2">
 
 </section>
 <section>
-<section id="using-quarto-for-presentations" class="title-slide slide level1 center">
-<h1>Using Quarto for presentations</h1>
+<section id="introduction" class="title-slide slide level1 center">
+<h1>Introduction</h1>
 
 </section>
-<section id="quarto" class="slide level2">
-<h2>Quarto</h2>
+<section id="background-information" class="slide level2">
+<h2>Background Information</h2>
 <ul>
-<li><p>The presentation is created using the Quarto CLI</p></li>
-<li><p><code>##</code> sets the start of a new slide</p></li>
+<li><p>Spread of fake news profoundly impacts the credibility and trustworthiness of news sources.</p>
+<ul>
+<li><p>News platforms and media have the tendency to exaggerate information just to get more public attention</p></li>
+<li><p>A promising approach - to focus and analyze the language being used in the news</p>
+<ul>
+<li>Certain words and phrases often serve as strong indicators of whether the news is fake or real</li>
+</ul></li>
+<li><p>In this project, I am using a dataset wherein each row consists of individual news articles, article title, and label (i.e., fake or real)</p></li>
+<li><p>Additional columns to represent sentiment analysis were created using feature engineering</p>
+<ul>
+<li>Actual names of the variables in the dataset - ‘title’, ‘text’, ‘label’, ‘title_polarity’, ‘title_subjectivity’, ‘text_polarity’, and ‘text_subjectivity’.</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>By applying TF-IDF feature extraction and machine learning methods, the goal is to not only classify news articles accurately, but also reveal patterns most predictive of fake news.</p>
+</section>
+<section id="question" class="slide level2">
+<h2>Question</h2>
+<ul>
+<li>Can we build an effective and interpretable fake news classifier using TF-IDF and machine learning?</li>
+<li>Can we identify which words or phrases are most predictive of fake news content using categorical features?</li>
 </ul>
 </section>
-<section id="layouts" class="slide level2">
-<h2>Layouts</h2>
-<p>You can use plain text</p>
+<section id="method-of-approach" class="slide level2">
+<h2>Method of Approach</h2>
+<ul>
+<li><p>Cleaned data thereby dropping irrelevant columns</p></li>
+<li><p>Feature engineering techniques: generated columns representing sentiment analysis</p>
+<ul>
+<li>Column names are ‘title’, ‘text’, ‘label’, ‘title_polarity’, ‘title_subjectivity’, ‘text_polarity’, and ’text_subjectivity.</li>
+</ul></li>
+<li><p>Trained model using logistic regression, random forest, and TF-IDF (Term Frequency Inverse Document Frequency)</p></li>
+<li><p>Compared models using ROC AUC, F1-score, recall, accuracy, and precision</p></li>
+</ul>
+</section>
+<section id="column-definitions" class="slide level2">
+<h2>Column Definitions</h2>
 <div class="columns">
-<div class="column" style="width:40%;">
-<ul>
-<li>or bullet points<sup>1</sup></li>
-</ul>
-</div><div class="column" style="width:60%;">
-<p>or in two columns</p>
-</div></div>
-<ul>
-<li><p>like</p></li>
-<li><p>this</p></li>
-</ul>
-<aside><ol class="aside-footnotes"><li id="fn1"><p>And add footnotes</p></li></ol></aside></section>
-<section id="code" class="slide level2">
-<h2>Code</h2>
-<div id="e09011da" class="cell" data-execution_count="4">
-<div class="cell-output cell-output-stdout">
-<pre><code>                            OLS Regression Results                            
-==============================================================================
-Dep. Variable:                    mpg   R-squared:                       0.073
-Model:                            OLS   Adj. R-squared:                  0.070
-Method:                 Least Squares   F-statistic:                     30.59
-Date:                Sat, 09 Aug 2025   Prob (F-statistic):           5.84e-08
-Time:                        23:14:18   Log-Likelihood:                -1346.4
-No. Observations:                 392   AIC:                             2697.
-Df Residuals:                     390   BIC:                             2705.
-Df Model:                           1                                         
-Covariance Type:            nonrobust                                         
-==============================================================================
-                 coef    std err          t      P&gt;|t|      [0.025      0.975]
-------------------------------------------------------------------------------
-const         35.8015      2.266     15.800      0.000      31.347      40.257
-speed       -354.7055     64.129     -5.531      0.000    -480.788    -228.623
-==============================================================================
-Omnibus:                       27.687   Durbin-Watson:                   0.589
-Prob(Omnibus):                  0.000   Jarque-Bera (JB):               18.976
-Skew:                           0.420   Prob(JB):                     7.57e-05
-Kurtosis:                       2.323   Cond. No.                         169.
-==============================================================================
+<p>Some columns to describe from dataset:</p><ul>
+<li><p><strong>#:</strong> article number</p></li>
+<li><p><strong>title:</strong> name of news article</p></li>
+<li><p><strong>text:</strong> contents of the article</p></li>
+<li><p><strong>label:</strong> classifies the news as either FAKE or REAL</p></li>
+</ul><p>However, I dropped the <strong>‘#’</strong> column since it’s irrelevant.</p>
+</div>
+</section></section>
+<section>
+<section id="modeling" class="title-slide slide level1 center">
+<h1>Modeling</h1>
 
-Notes:
-[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.</code></pre>
-</div>
-</div>
 </section>
-<section id="plots" class="slide level2">
-<h2>Plots</h2>
-<div id="e32c9f76" class="cell" data-execution_count="5">
-<div class="cell-output cell-output-display">
-<div>
+<section id="dataset---first-few-rows" class="slide level2">
+<h2>Dataset - First Few Rows</h2>
+<div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="presentation_files/figure-revealjs/cell-6-output-1.png" width="1673" height="1070"></p>
+<p><img data-src="images/data_head-2.png" class="quarto-figure quarto-figure-center" style="width:12in;height:4in"></p>
 </figure>
 </div>
-</div>
-</div>
 </section>
-<section id="plot-and-text" class="slide level2">
-<h2>Plot and text</h2>
-<div class="columns">
-<div class="column" style="width:50%;">
-<ul>
-<li><p>Some text</p></li>
-<li><p>goes here</p></li>
-</ul>
-</div><div class="column" style="width:50%;">
-<div id="b2d0ea50" class="cell" data-fig.width="5.5" data-execution_count="6">
-<div class="cell-output cell-output-display">
-<div>
+<section id="bar-plot---top-20-features-random-forest" class="slide level2">
+<h2>Bar Plot - Top 20 Features (Random Forest)</h2>
+<div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="presentation_files/figure-revealjs/cell-7-output-1.png" width="1585" height="998"></p>
+<p><img data-src="images/bar-plot-top20-color-code.png" class="quarto-figure quarto-figure-center" style="width:12in;height:6in"></p>
 </figure>
 </div>
-</div>
-</div>
-</div></div>
-</section></section>
-<section>
-<section id="a-new-section" class="title-slide slide level1 center">
-<h1>A new section…</h1>
-
 </section>
-<section id="tables" class="slide level2">
-<h2>Tables</h2>
-<p>If you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,</p>
-<div id="dde3770b" class="cell" data-execution_count="7">
-<div class="cell-output cell-output-display" data-execution_count="7">
-<table border="1" class="dataframe">
-
-<thead>
-
-<tr style="text-align: right;">
-
-<th>
-</th>
-
-<th>
-species
-</th>
-
-<th>
-island
-</th>
-
-<th>
-bill_length_mm
-</th>
-
-<th>
-bill_depth_mm
-</th>
-
-<th>
-flipper_length_mm
-</th>
-
-<th>
-body_mass_g
-</th>
-
-<th>
-sex
-</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-<tr>
-
-<th>
-0
-</th>
-
-<td>
-Adelie
-</td>
-
-<td>
-Torgersen
-</td>
-
-<td>
-39.1
-</td>
-
-<td>
-18.7
-</td>
-
-<td>
-181.0
-</td>
-
-<td>
-3750.0
-</td>
-
-<td>
-Male
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-1
-</th>
-
-<td>
-Adelie
-</td>
-
-<td>
-Torgersen
-</td>
-
-<td>
-39.5
-</td>
-
-<td>
-17.4
-</td>
-
-<td>
-186.0
-</td>
-
-<td>
-3800.0
-</td>
-
-<td>
-Female
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-2
-</th>
-
-<td>
-Adelie
-</td>
-
-<td>
-Torgersen
-</td>
-
-<td>
-40.3
-</td>
-
-<td>
-18.0
-</td>
-
-<td>
-195.0
-</td>
-
-<td>
-3250.0
-</td>
-
-<td>
-Female
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-4
-</th>
-
-<td>
-Adelie
-</td>
-
-<td>
-Torgersen
-</td>
-
-<td>
-36.7
-</td>
-
-<td>
-19.3
-</td>
-
-<td>
-193.0
-</td>
-
-<td>
-3450.0
-</td>
-
-<td>
-Female
-</td>
-
-</tr>
-
-<tr>
-
-<th>
-5
-</th>
-
-<td>
-Adelie
-</td>
-
-<td>
-Torgersen
-</td>
-
-<td>
-39.3
-</td>
-
-<td>
-20.6
-</td>
-
-<td>
-190.0
-</td>
-
-<td>
-3650.0
-</td>
-
-<td>
-Male
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-</div>
-</div>
-</section>
-<section id="images" class="slide level2">
-<h2>Images</h2>
-
-<img data-src="images/watercolour_sys02_img34_teacup-ocean.png" width="500" class="r-stretch quarto-figure-center"><p class="caption">Image credit: Danielle Navarro, Percolate.</p></section>
-<section id="math-expressions" class="slide level2 smaller">
-<h2>Math Expressions</h2>
-<p>You can write LaTeX math expressions inside a pair of dollar signs, e.g.&nbsp;$\alpha+\beta$ renders <span class="math inline">\(\alpha + \beta\)</span>. You can use the display style with double dollar signs:</p>
-<pre><code>$$\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i$$</code></pre>
-<p><span class="math display">\[
-\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i
-\]</span></p>
-<p>Limitations:</p>
-<ol type="1">
-<li><p>The source code of a LaTeX math expression must be in one line, unless it is inside a pair of double dollar signs, in which case the starting <code>$$</code> must appear in the very beginning of a line, followed immediately by a non-space character, and the ending <code>$$</code> must be at the end of a line, led by a non-space character;</p></li>
-<li><p>There should not be spaces after the opening <code>$</code> or before the closing <code>$</code>.</p></li>
-</ol>
-</section></section>
-<section>
-<section id="wrap-up" class="title-slide slide level1 center">
-<h1>Wrap up</h1>
-
-</section>
-<section id="feeling-adventurous" class="slide level2">
-<h2>Feeling adventurous?</h2>
+<section id="bar-plot---top-20-features-interpretation" class="slide level2">
+<h2>Bar Plot - Top 20 Features (Interpretation)</h2>
 <ul>
-<li><p>You are welcomed to use the default styling of the slides. In fact, that’s what I expect majority of you will do. You will differentiate yourself with the content of your presentation.</p></li>
-<li><p>But some of you might want to play around with slide styling. Some solutions for this can be found at https://quarto.org/docs/presentations/revealjs.</p></li>
+<li><p>The bar plot using random forest classifier highlights the <strong>top 20 phrases that the RF model relies on to distinguish fake news from real news</strong>, ranked by their importance.</p></li>
+<li><p>The model pays most attention to the top 20 phrases when deciding if an article is <strong>fake or real</strong>.</p>
+<ul>
+<li>e.g., “president called trump” is the strongest signal feature in the trained model, while “obama called” is still useful, but weaker.</li>
+</ul></li>
 </ul>
-
-
+</section>
+<section id="confusion-matrix-random-forest" class="slide level2">
+<h2>Confusion Matrix (Random Forest)</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="images/confusion_matrix_rf.png" class="quarto-figure quarto-figure-center" style="width:6in;height:6in"></p>
+</figure>
+</div>
+</section>
+<section id="bar-plot---coefficients-of-phrases-logistic-regression" class="slide level2">
+<h2>Bar Plot - Coefficients of Phrases (Logistic Regression)</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="images/coeff_phrase-bar_plot-2.png" class="quarto-figure quarto-figure-center" style="width:8in;height:6in"></p>
+</figure>
+</div>
+</section>
+<section id="confusion-matrix-logistic-regression" class="slide level2">
+<h2>Confusion Matrix (Logistic Regression)</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="images/confusion_matrix_lr.png" class="quarto-figure quarto-figure-center" style="width:6in;height:6in"></p>
+</figure>
+</div>
+</section>
+<section id="bar-plot---weights-of-phrases-logistic-regression" class="slide level2">
+<h2>Bar Plot - Weights of Phrases (Logistic Regression)</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="images/weights_phrase-bar_plot_lr-3.png" class="quarto-figure quarto-figure-center" style="width:10in;height:5.5in"></p>
+</figure>
+</div>
+</section>
+<section id="coefficients-weights-plot-interpretation" class="slide level2">
+<h2>Coefficients &amp; Weights Plot (Interpretation)</h2>
+<ul>
+<li><p>The two-way bar plot provides insights into which words and phrases are most indicative of fake versus real news.</p></li>
+<li><p>Words associated with <strong>fake news carried positive coefficients</strong>, while those linked to <strong>real news carried negative coefficients</strong>.</p>
+<ul>
+<li><p>Coefficients: represent how much each feature contributes in the log-odds space</p></li>
+<li><p>Weights calculated as exp(coefficient) show the multiplicative effect on the odds.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="evaluating-logistic-random-forest-regression" class="slide level2">
+<h2>Evaluating Logistic &amp; Random Forest Regression</h2>
+<ul>
+<li><p><strong>ROC AUC (LR) = 0.9760, ROC AUC (RF) = 0.9595</strong></p>
+<ul>
+<li><p>LR can correctly distinguish between fake and real news <strong>97.6% of the time</strong></p></li>
+<li><p>RF achieves a slightly lower performance of <strong>95.95%</strong>.</p></li>
+</ul></li>
+<li><p>The confusion matrix further highlights the effectiveness of both models.</p>
+<ul>
+<li>Both RF and LR model had a very similar performance in terms of their ability correctly classifying true positives and true negatives.</li>
+</ul></li>
+</ul>
+</section>
+<section id="key-takeaway" class="slide level2">
+<h2>Key Takeaway</h2>
+<ul>
+<li><p>This project shows that TF-IDF with machine learning can build an accurate and interpretable fake news classifier.</p></li>
+<li><p>LR and RF both achieved high ROC AUC scores (&gt;0.95), confirming strong predictive ability.</p></li>
+<li><p>This project analysis also highlights the linguistic patterns that drive these predictions.</p></li>
+<li><p>Feature analysis highlighted key phrases most indicative of fake vs.&nbsp;real news.</p>
+<ul>
+<li>Some predictive words showed discrepancies, ultimately conveying that interpretability is not always perfectly reliable.</li>
+</ul></li>
+</ul>
 </section></section>
+<section id="thank-you" class="title-slide slide level1 center">
+<h1>Thank You!</h1>
 
+
+</section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
 <div class="footer footer-default">
